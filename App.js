@@ -32,7 +32,7 @@ export default function App() {
   const [routes, setRoutes] = useState([]);
   useEffect(() => {
     fetch(
-      `https://maps.googleapis.com/maps/api/directions/json?origin=${markers[0].coordinate.latitude}, ${markers[0].coordinate.longitude}&key=YOURAPIKEY&destination=${markers[1].coordinate.latitude}, ${markers[1].coordinate.longitude}&mode=walking`
+      `https://maps.googleapis.com/maps/api/directions/json?origin=${markers[0].coordinate.latitude}, ${markers[0].coordinate.longitude}&key=YOURAPIKEY=${markers[1].coordinate.latitude}, ${markers[1].coordinate.longitude}&mode=walking`
     )
       .then((resp) => resp.json())
       .then((data) => {
@@ -88,7 +88,12 @@ export default function App() {
             </Marker>
           );
         })}
-        <Polyline coordinates={routes} strokeWidth={3} />
+        <Polyline
+          coordinates={routes}
+          strokeWidth={3}
+          tappable={true}
+          onPress={() => alert("test")}
+        />
       </MapView>
     </View>
   );
