@@ -32,23 +32,34 @@ export default function App() {
   const [routes, setRoutes] = useState([]);
   useEffect(() => {
     fetch(
-      `https://maps.googleapis.com/maps/api/directions/json?origin=${markers[0].coordinate.latitude}, ${markers[0].coordinate.longitude}&key=YOURAPIKEY=${markers[1].coordinate.latitude}, ${markers[1].coordinate.longitude}&mode=walking`
+      `https://maps.googleapis.com/maps/api/directions/json?origin=${markers[0].coordinate.latitude}, ${markers[0].coordinate.longitude}&key=[YOURAPIKEY]&destination=${markers[1].coordinate.latitude}, ${markers[1].coordinate.longitude}&mode=walking&alternatives=true`
     )
       .then((resp) => resp.json())
       .then((data) => {
-        var tempRoutes = data.routes[0].legs[0].steps.map((step, i) => {
-          return {
-            latitude: step.end_location.lat,
-            longitude: step.end_location.lng,
-          };
+        // var tempRoutes = data.routes[0].legs[0].steps.map((step, i) => {
+        //   return {
+        //     latitude: step.end_location.lat,
+        //     longitude: step.end_location.lng,
+        //   };
+        // });
+        // setRoutes([
+        //   {
+        //     latitude: markers[0].coordinate.latitude,
+        //     longitude: markers[0].coordinate.longitude,
+        //   },
+        //   ...tempRoutes,
+        // ]);
+        const routesTemp = data.routes.map((route, i) => {
+          const legsTemp = route.legs[0].steps.map((step, i) => {
+            return {
+              latitude: step.end_location.lat,
+              longitude: step.end_location.lng,
+            };
+          });
+          return legsTemp;
         });
-        setRoutes([
-          {
-            latitude: markers[0].coordinate.latitude,
-            longitude: markers[0].coordinate.longitude,
-          },
-          ...tempRoutes,
-        ]);
+
+        setRoutes(routesTemp);
       });
   }, [markers]);
 
@@ -88,12 +99,22 @@ export default function App() {
             </Marker>
           );
         })}
-        <Polyline
-          coordinates={routes}
-          strokeWidth={3}
-          tappable={true}
-          onPress={() => alert("test")}
-        />
+        {routes.map((route, i) => {
+          return (
+            <Polyline
+              coordinates={[
+                {
+                  latitude: markers[0].coordinate.latitude,
+                  longitude: markers[0].coordinate.longitude,
+                },
+                ...route,
+              ]}
+              strokeWidth={3}
+              tappable={true}
+              onPress={() => alert("test")}
+            />
+          );
+        })}
       </MapView>
     </View>
   );
