@@ -2,53 +2,71 @@ import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View, Dimensions, Animated } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
+import * as Location from "expo-location";
 
 export default function App() {
+  const [location, setLocation] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
   const [iMarker, setIMarker] = useState(null);
+  const [iRoute, setIRoute] = useState(0);
   const [markers, setMarkers] = useState([
     {
       coordinate: {
         latitude: 45.5230786,
         longitude: -122.6701034,
       },
-      title: "Third Best Place",
-      description: "This is the third best place in Portland",
     },
     {
       coordinate: {
         latitude: 45.521016,
         longitude: -122.6561917,
       },
-      title: "Fourth Best Place",
-      description: "This is the fourth best place in Portland",
     },
   ]);
-  const [region, setRegion] = useState({
-    latitude: 45.52220671242907,
-    longitude: -122.6653281029795,
-    latitudeDelta: 0.04864195044303443,
-    longitudeDelta: 0.040142817690068,
-  });
+  const [region, setRegion] = useState(null);
   const [routes, setRoutes] = useState([]);
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestPermissionsAsync();
+      if (status !== "granted") {
+        setErrorMsg("Permission to access location was denied");
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      setLocation({
+        ...location,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      });
+      setRegion({
+        longitude: location.coords.longitude,
+        latitude: location.coords.latitude,
+        latitudeDelta: 0.0922,
+        longitudeDelta: 0.0421,
+      });
+      setMarkers([
+        {
+          coordinate: {
+            longitude: location.coords.longitude,
+            latitude: location.coords.latitude,
+          },
+        },
+        {
+          coordinate: {
+            longitude: location.coords.longitude,
+            latitude: location.coords.latitude,
+          },
+        },
+      ]);
+    })();
+  }, []);
+
   useEffect(() => {
     fetch(
       `https://maps.googleapis.com/maps/api/directions/json?origin=${markers[0].coordinate.latitude}, ${markers[0].coordinate.longitude}&key=[YOURAPIKEY]&destination=${markers[1].coordinate.latitude}, ${markers[1].coordinate.longitude}&mode=walking&alternatives=true`
     )
       .then((resp) => resp.json())
       .then((data) => {
-        // var tempRoutes = data.routes[0].legs[0].steps.map((step, i) => {
-        //   return {
-        //     latitude: step.end_location.lat,
-        //     longitude: step.end_location.lng,
-        //   };
-        // });
-        // setRoutes([
-        //   {
-        //     latitude: markers[0].coordinate.latitude,
-        //     longitude: markers[0].coordinate.longitude,
-        //   },
-        //   ...tempRoutes,
-        // ]);
         const routesTemp = data.routes.map((route, i) => {
           const legsTemp = route.legs[0].steps.map((step, i) => {
             return {
@@ -78,6 +96,13 @@ export default function App() {
     newMarkers[iMarker].coordinate.longitude = e.coordinate.longitude;
     setMarkers(newMarkers);
   };
+
+  let text = "Waiting..";
+  if (errorMsg) {
+    text = errorMsg;
+  } else if (location) {
+    text = JSON.stringify(location);
+  }
 
   return (
     <View style={styles.container}>
@@ -110,8 +135,10 @@ export default function App() {
                 ...route,
               ]}
               strokeWidth={3}
+              strokeColor={iRoute === i ? "green" : "red"}
               tappable={true}
-              onPress={() => alert("test")}
+              onPress={() => setIRoute(i)}
+              key={i}
             />
           );
         })}
